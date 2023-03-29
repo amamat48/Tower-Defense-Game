@@ -9,6 +9,7 @@ let cellSize = 100
 let cellGap = 3
 let frames = 0
 let enemySpawnTime = 500
+let resources = 300
 
 let cells = []
 let defenders = []
@@ -30,20 +31,20 @@ const collision = (first, second) => { // the parameters are rectangles, i.e ene
 }
 
 // get the position of the mose when over the canvas
-canvas.addEventListener('mousemove', function(event) {
+canvas.addEventListener('mousemove', function (event) {
     mouseX = event.offsetX
     mouseY = event.offsetY
-    console.log(mouseX, mouseY)
+    // console.log(mouseX, mouseY)
 })
 
 // ALL THE CLASSES I NEED
 
 class Cell {
-    constructor (x, y) {
+    constructor(x, y) {
         this.x = x
         this.y = y
         this.width = cellSize
-        this.height =  cellSize
+        this.height = cellSize
     }
     makeCell() {
         ctx.strokeStyle = 'black'
@@ -52,11 +53,11 @@ class Cell {
 }
 
 class Defender {
-    constructor (x, y) {
+    constructor(x, y) {
         this.x = x;
         this.y = y
         this.health = 100
-        this.width =  cellSize
+        this.width = cellSize
         this.height = cellSize
         this.cost = 100
         this.shootTime = 0
@@ -78,15 +79,15 @@ class Defender {
 }
 
 class Enemy {
-    constructor (verticalPosition) { // vertical position is where i want the enemy to randomly spawn
+    constructor(verticalPosition) { // vertical position is where i want the enemy to randomly spawn
         this.x = x;
         this.y = verticalPosition
         this.width = cellSize
         this.height = cellSize
         this.speed = Math.random() * 0.2 + 0.4
         this.health = 100
-        this.gainedResources = this.health/2
-        this.movement  = this.speed
+        this.gainedResources = this.health / 2
+        this.movement = this.speed
     }
     placeEnemy() {
         ctx.fillStyle = 'red'
@@ -104,21 +105,53 @@ class Enemy {
 const createGameBoard = () => {
     for (let y = 0; y < canvas.height; y += cellSize) { // gets all the y valuse as multiples of 100
         for (let x = 0; x < canvas.width; x += cellSize) { // gets all x values as multiples of 100
-        cells.push(new Cell(x, y))
+            cells.push(new Cell(x, y))
+        }
     }
-}
 }
 
 createGameBoard()
 
+// place a defender on the canvas depending on the mouse position
+
+canvas.addEventListener('click', function (event) {
+    let positionOfX = mouseX - (mouseX % cellSize) + cellGap // calculates x coordinate of the clicked cell, subtracts the remainder, and get the most left coordinate and offset it with the cellGap, which is 3
+    let positionOfY = mouseY - (mouseY % cellSize) + cellGap // same with Y
+
+    for(let i = 0; i < defenders.length;i++) {
+        if (resources >= defenders[i].cost) {
+            defenders.push(new Defender(positionOfX, positionOfY))
+            resources -= defenders[i].cost
+            console.log(defenders)
+            break
+        }
+    }
+
+
+    console.log(positionOfX, positionOfY)
+})
+
+const makeDefender = () => {
+    for (let i = 0; i < defenders.length; i++) {
+        defenders[i].placeDefender()
+        console.log(defenders)
+    }
+}
+
+
+
+
+
+
 const printCells = () => {
-    for(let i = 0; i < cells.length; i++) {
+    for (let i = 0; i < cells.length; i++) {
         cells[i].makeCell()
     }
 }
 
 const animate = () => {
     printCells()
+    makeDefender()
     requestAnimationFrame(animate) // recursive function to continue drawing the cells on the canvas
 }
 animate()
