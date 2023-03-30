@@ -5,6 +5,9 @@ canvas.width = 900
 canvas.height = 400
 
 // GLOBAL VARIABLES
+
+let gameOver = false
+
 let cellSize = 100
 let cellGap = 3
 let frames = 0
@@ -98,22 +101,22 @@ class Enemy {
         ctx.fillText(Math.floor(this.health), this.x, this.y + 30)
     }
     move() {
-        ctx.clearRect(this.x, this.y, this.width, this.height)
         this.x -= this.movement
     }
 }
 
-class Projctile {
+class Projectile {
     constructor (x, y) {
         this.x = x
         this.y = y
+        this.width = 6
         this.speed = 5
         this.power = 25
     }
     placeProjectile() {
         ctx.fillStyle = 'black'
         ctx.beginPath()
-        ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2)
+        ctx.arc(this.x + 100, this.y + 30, this.width, 0, Math.PI * 2)
         ctx.fill()
     }
     move() {
@@ -163,15 +166,15 @@ const makeEnemies = () => {
     for(let i = 0; i < enemies.length; i++) {
         enemies[i].move()
         enemies[i].placeEnemy()
+        if (enemies[i].x <= 0) {
+            gameOver = true
+        }
     }
 
     if (frames % enemySpawnTime === 0) {
         enemies.push(new Enemy(enemyY))
 
     }
-
-
-
 }
 
 // FUNCTION TO DETECT COLLISION BETWEEN ENEMY AND DEFENDER
@@ -182,7 +185,7 @@ const enemyColision = () => {
 
             if(defenders[i] && collision(defenders[i], enemies[j])) {
                 enemies[j].movement = 0
-                defenders[i].health -= 1
+                defenders[i].health -= 0.2
             }
 
             if (defenders[i] && defenders[i].health <= 0) {
@@ -198,7 +201,39 @@ const enemyColision = () => {
 // FUNCTION TO MAKE PROJECTILES
 
 const makeProjectiles = () => {
-    
+    for(let i = 0;i < defenders.length; i++) {
+
+        defenders[i].shoot()
+
+        for(let j = 0; j < projectiles.length; j++ ) {
+
+            projectiles[j].placeProjectile()
+            projectiles[j].move()
+            // console.log(projectiles[j])
+            // console.log(defenders)
+
+        }
+    }
+}
+
+// COLLISION BETWEEN PROJECTILES AND ENEMIES
+
+const projectileCollision = () => {
+    for(let i = 0; i < projectiles.length; i++) {
+        for(let j = 0; j < enemies.length; j++) {
+            if(projectiles[i] && enemies[j] && collision(enemies[j], projectiles[i])) {
+
+                projectiles.splice(i, 1)
+                enemies[j].health -= 20
+            }
+            if (enemies[j] && enemies[j].health <= 0) {
+                resources += enemies[j].gainedResources
+                enemies.splice(j, 1)
+            }
+        }
+
+
+    }
 }
 
 
@@ -217,11 +252,21 @@ const printCells = () => {
 }
 
 const animate = () => {
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     printCells()
+    for(let i = 0; i < defenders.length; i++) {
+        defenders[i].placeDefender()
+        console.log(defenders[i])
+    }
     makeEnemies()
     enemyColision()
+    makeProjectiles()
+    projectileCollision()
     frames++
-    requestAnimationFrame(animate) // recursive function to continue drawing the cells on the canvas
+    if (gameOver == false) {
+        requestAnimationFrame(animate)
+    } // recursive function to continue drawing the cells on the canvas
 }
 animate()
 
