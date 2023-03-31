@@ -11,9 +11,9 @@ let gameOver = false
 let cellSize = 100
 let cellGap = 3
 let frames = 0
-let enemySpawnTime = 300
+let enemySpawnTime = 100
 let resources = 300
-let defenderCost= 100
+let defenderCost = 100
 
 let cells = []
 let defenders = []
@@ -25,14 +25,18 @@ let mouseY = 0
 
 // collision function
 const collision = (first, second) => { // the parameters are rectangles, i.e enemy, projectile, defenders
-    if (!(first.x > second.x + second.width || // if starting x of first is more right than starting x of second rect + width, they dont colide
+
+    //checks if they DON'T overlap
+    if (!
+        (first.x > second.x + second.width ||
         first.x + first.width < second.x ||
         first.y > second.y + second.height ||
-        first.y + first.height < second.y)
+        first.y < second.y)
     ) {
         return true
     }
     return false
+
 }
 
 // get the position of the mose when over the canvas
@@ -77,15 +81,15 @@ class Defender {
     shoot() {
         this.shootTime++
         if (this.shootTime % 75 === 0) {
-            projectiles.push(new Projectile(this.x, this.y))
+            projectiles.push(new Projectile(this.x + 30, this.y + 30))
         }
     }
 }
 
 class Enemy {
-    constructor(verticalPosition) { // vertical position is where i want the enemy to randomly spawn
+    constructor(y) { // vertical position is where i want the enemy to randomly spawn
         this.x = canvas.width;
-        this.y = verticalPosition
+        this.y = y
         this.width = cellSize
         this.height = cellSize
         this.speed = Math.random() * 0.2 + 0.4
@@ -94,7 +98,7 @@ class Enemy {
         this.movement = this.speed
     }
     placeEnemy() {
-        ctx.fillStyle = 'red'
+        ctx.fillStyle = 'green'
         ctx.fillRect(this.x, this.y, this.width, this.height)
         ctx.fillStyle = 'black'
         ctx.font = '20px Arial'
@@ -106,17 +110,16 @@ class Enemy {
 }
 
 class Projectile {
-    constructor (x, y) {
+    constructor(x, y) {
         this.x = x
         this.y = y
         this.width = 6
-        this.speed = 5
-        this.power = 25
+        this.speed = 3.5
     }
     placeProjectile() {
         ctx.fillStyle = 'black'
         ctx.beginPath()
-        ctx.arc(this.x + 100, this.y + 30, this.width, 0, Math.PI * 2)
+        ctx.arc(this.x, this.y, this.width, 0, Math.PI * 2)
         ctx.fill()
     }
     move() {
@@ -142,13 +145,13 @@ canvas.addEventListener('click', function (event) {
     let positionOfY = mouseY - (mouseY % cellSize) // same with Y
 
 
-    if(resources >= defenderCost) {
+    if (resources >= defenderCost) {
         defenders.push(new Defender(positionOfX, positionOfY))
         resources -= defenderCost
-        for(let i = 0; i < defenders.length; i++) {
-            defenders[i].placeDefender()
-            console.log(defenders[i])
-        }
+        // for(let i = 0; i < defenders.length; i++) {
+        //     defenders[i].placeDefender()
+        //     console.log(defenders[i])
+        // }
 
     }
 
@@ -161,9 +164,9 @@ console.log(defenders)
 // FUNCTION TO SPAWN ENEMIES
 
 const makeEnemies = () => {
-    let enemyY = Math.floor(Math.random() * 4) * cellSize
+    let enemyY = Math.floor(Math.random() * 4) * cellSize // a random number between 0 and 400 so the enemies can spawn at a random position on the grid
 
-    for(let i = 0; i < enemies.length; i++) {
+    for (let i = 0; i < enemies.length; i++) {
         enemies[i].move()
         enemies[i].placeEnemy()
         if (enemies[i].x <= 0) {
@@ -180,17 +183,17 @@ const makeEnemies = () => {
 // FUNCTION TO DETECT COLLISION BETWEEN ENEMY AND DEFENDER
 
 const enemyColision = () => {
-    for(let i = 0; i < defenders.length; i++) {
-        for(let j = 0; j < enemies.length; j++) {
+    for (let i = 0; i < defenders.length; i++) {
+        for (let j = 0; j < enemies.length; j++) {
 
-            if(defenders[i] && collision(defenders[i], enemies[j])) {
+            if (defenders[i] && collision(defenders[i], enemies[j])) {
                 enemies[j].movement = 0
                 defenders[i].health -= 0.2
             }
 
             if (defenders[i] && defenders[i].health <= 0) {
                 defenders.splice(i, 1)
-                i--
+                // i--
                 enemies[j].movement = enemies[j].speed
             }
 
@@ -201,11 +204,11 @@ const enemyColision = () => {
 // FUNCTION TO MAKE PROJECTILES
 
 const makeProjectiles = () => {
-    for(let i = 0;i < defenders.length; i++) {
+    for (let i = 0; i < defenders.length; i++) {
 
         defenders[i].shoot()
 
-        for(let j = 0; j < projectiles.length; j++ ) {
+        for (let j = 0; j < projectiles.length; j++) {
 
             projectiles[j].placeProjectile()
             projectiles[j].move()
@@ -219,11 +222,12 @@ const makeProjectiles = () => {
 // COLLISION BETWEEN PROJECTILES AND ENEMIES
 
 const projectileCollision = () => {
-    for(let i = 0; i < projectiles.length; i++) {
-        for(let j = 0; j < enemies.length; j++) {
-            if(projectiles[i] && enemies[j] && collision(enemies[j], projectiles[i])) {
+    for (let i = 0; i < projectiles.length; i++) {
+        for (let j = 0; j < enemies.length; j++) {
+            if (projectiles[i] && enemies[j] && collision(projectiles[i], enemies[j])) {
 
                 projectiles.splice(i, 1)
+                i--
                 enemies[j].health -= 20
             }
             if (enemies[j] && enemies[j].health <= 0) {
@@ -253,20 +257,19 @@ const printCells = () => {
 
 const animate = () => {
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.clearRect(0, 0, canvas.width, canvas.height) // every frame clears the canvas
     printCells()
-    for(let i = 0; i < defenders.length; i++) {
+    for (let i = 0; i < defenders.length; i++) { // place every defender that is in the array and update it every frame
         defenders[i].placeDefender()
-        console.log(defenders[i])
     }
     makeEnemies()
     enemyColision()
     makeProjectiles()
     projectileCollision()
     frames++
-    if (gameOver == false) {
-        requestAnimationFrame(animate)
-    } // recursive function to continue drawing the cells on the canvas
+    if (gameOver == false) { // if the game is not over
+        requestAnimationFrame(animate) // recursive function to continue drawing the cells on the canvas
+    }
 }
 animate()
 
