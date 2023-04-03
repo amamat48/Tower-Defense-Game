@@ -1,41 +1,53 @@
 let canvas = document.querySelector('#canvas1')
 let ctx = canvas.getContext('2d')
+let startButton = document.querySelector('#start-game')
+
+window.alert('Mr.President! There has been a zombie outbreak and this is the last safe space in the US. We are here to keep you safe and keep the zombies away. But these Zombies are different from the ones in the movies, they know when to retreat! Its your job to direct us on where to go to keep us safe! (click ok to continue)')
 
 canvas.width = 900
 canvas.height = 400
 
 // GLOBAL VARIABLES
 
-let roundWon = false
+// BOOLEAN VARIABLES
+// let roundWon = false
 let gameOver = false
+// let gameStarted = false
+let bigBossIsAlive = true
 
+// GRID VARIABLES AND TIMING LOGIC VARIABLES
 let cellSize = 100
 let cellGap = 3
 let frames = 0
-let enemySpawnTime = 270
+let enemySpawnTime = 200
 
+// PLAYER STATUS VARIABLES
 let currentScore = 0
-let resources = 300
+let money = 300
 let defenderCost = 100
-let winningScore = 40
+let winningScore = 150
 
+// EMPTY ARRAYS FOR STORING DATA
 let cells = []
 let defenders = []
 let projectiles = []
 let enemies = []
 
+
+// TO STORE MOUS DATA
 let mouseX = 10
 let mouseY = 0
 
-// collision function
+
+// COLLISION FUNCTION
 const collision = (first, second) => { // the parameters are rectangles, i.e enemy, projectile, defenders
 
     //checks if they DON'T overlap
     if (!
         (first.x > second.x + second.width ||
-        first.x + first.width < second.x ||
-        first.y > second.y + second.height ||
-        first.y < second.y)
+            first.x + first.width < second.x ||
+            first.y > second.y + second.height ||
+            first.y < second.y)
     ) {
         return true
     }
@@ -79,39 +91,67 @@ class Defender {
         ctx.fillStyle = 'blue'
         ctx.fillRect(this.x, this.y, this.width, this.height)
         ctx.fillStyle = 'gold'
-        ctx.font = '20px Arial'
+        ctx.font = '20px Tillana'
         ctx.fillText(Math.floor(this.health), this.x + 10, this.y + 20)
     }
     shoot() {
         this.shootTime++
-        if (this.shootTime % 100 === 0) {
+        if (this.shootTime % 60 === 0) {
             projectiles.push(new Projectile(this.x + 30, this.y + 30))
         }
     }
 }
 
 class Enemy {
-    constructor(y) { // vertical position is where i want the enemy to randomly spawn
+    constructor(y) { // the y parameter is where i want the enemy to randomly spawn
         this.x = canvas.width;
         this.y = y
         this.width = cellSize
         this.height = cellSize
-        this.speed = Math.random() * 0.2 + 0.4
-        this.health = 100
-        this.gainedResources = this.health / 2
-        this.movement = this.speed
+        this.speed = Math.random() * 0.3 + 0.6
+        this.health = 180
+        this.gainedMoney = 50
     }
     placeEnemy() {
         ctx.fillStyle = 'green'
         ctx.fillRect(this.x, this.y, this.width, this.height)
         ctx.fillStyle = 'black'
-        ctx.font = '20px Arial'
+        ctx.font = '20px Tillana'
         ctx.fillText(Math.floor(this.health), this.x, this.y + 30)
     }
     move() {
-        this.x -= this.movement
+        this.x -= this.speed
     }
 }
+
+class BigBoss {
+    constructor() {
+        this.x = canvas.width;
+        this.y = 100
+        this.width = cellSize * 3
+        this.height = canvas.height
+        this.speed = Math.random() * 0.2 + 0.1
+        this.health = 10000
+    }
+    placeBoss() {
+        ctx.fillStyle = 'green'
+        ctx.fillRect(this.x, this.y, this.width, this.height)
+        ctx.fillStyle = 'black'
+        ctx.font = '20px Tillana'
+        ctx.fillText(Math.floor(this.health), this.x, this.y + 30)
+    }
+    move() {
+        this.x -= this.speed
+    }
+}
+
+// FINAL BOSS
+let bigBoss = new BigBoss()
+
+
+
+
+
 
 class Projectile {
     constructor(x, y) {
@@ -149,30 +189,23 @@ canvas.addEventListener('click', function (event) {
     let positionOfY = mouseY - (mouseY % cellSize) // same with Y
 
 
-    if (resources >= defenderCost) {
-        defenders.push(new Defender(positionOfX, positionOfY))
-        resources -= defenderCost
-        // for(let i = 0; i < defenders.length; i++) {
-        //     defenders[i].placeDefender()
-        //     console.log(defenders[i])
-        // }
+    if (money >= defenderCost) {
+        defenders.push(new Defender(positionOfX, positionOfY)) // placed a new defender where the mouse is clicked on the canvas
+        money -= defenderCost
 
+    } else {
+        window.alert('Theres not enough money to add a defender!!')
     }
-
-
-
-    console.log(positionOfX, positionOfY)
 })
 
 console.log(defenders)
 // FUNCTION TO SPAWN ENEMIES
 
 const makeEnemies = () => {
-    let enemyY = Math.floor(Math.random() * 4) * cellSize + 100 // a random number between 0 and 400 so the enemies can spawn at a random position on the grid
+    let enemyY = Math.floor(Math.random() * 3) * cellSize + 100// a random number between 0 and 300 so the enemies can spawn at a random position on the grid
 
-    if (frames % enemySpawnTime === 0) {
+    if (frames % enemySpawnTime === 0 && currentScore <= winningScore) {
         enemies.push(new Enemy(enemyY))
-
     }
 
     for (let i = 0; i < enemies.length; i++) {
@@ -182,9 +215,11 @@ const makeEnemies = () => {
             gameOver = true
         }
     }
-
-
 }
+
+// FUNCTION TO MAKE THE BIG BOSS
+
+
 
 // FUNCTION TO DETECT COLLISION BETWEEN ENEMY AND DEFENDER
 
@@ -192,7 +227,7 @@ const enemyColision = () => {
     for (let i = 0; i < defenders.length; i++) {
         for (let j = 0; j < enemies.length; j++) {
 
-            if (defenders[i] && collision(defenders[i], enemies[j])) {
+            if (defenders[i] && enemies[j] && collision(defenders[i], enemies[j])) {
                 enemies[j].movement = 0
                 defenders[i].health -= 0.2
             }
@@ -202,6 +237,8 @@ const enemyColision = () => {
                 i--
                 enemies[j].movement = enemies[j].speed
             }
+
+
 
         }
     }
@@ -237,7 +274,7 @@ const projectileCollision = () => {
                 enemies[j].health -= 20
             }
             if (enemies[j].health <= 0) {
-                resources += enemies[j].gainedResources
+                money += enemies[j].gainedMoney
                 currentScore += 10
                 enemies.splice(j, 1)
                 i--
@@ -251,36 +288,69 @@ const projectileCollision = () => {
     }
 }
 
-const gameStatus = () => {
+// FUNCTION TO MAKE THE BIG BOSS
+
+const makeBigBoss = () => { // contains all the logic related to the Big Boss
+    if (currentScore >= winningScore && enemies.length == 0) {
+        window.alert('The zombies seemed to have something up their sleeve! That zombie is pretty big we might have a problem on our hands! it even goes through our defenders to get strait to you!')
+        bigBoss.placeBoss()
+        bigBoss.move()
+    }
+    if (bigBoss.x <= 0) {
+        gameOver = true
+    }
+}
+
+const bigBossCollision = () => {
+    for (let i = 0; i < projectiles.length; i++) {
+        if (projectiles[i] && bigBoss && collision(projectiles[i], bigBoss)) {
+
+            projectiles.splice(i, 1)
+            i--
+            bigBoss.health -= 20
+        }
+        if (bigBoss.health <= 0) {
+            bigBossIsAlive = false
+        }
+    }
+    for (let i = 0; i < defenders.length; i++) {
+        if (bigBoss && defenders[i] && collision(defenders[i], bigBoss)) {
+            defenders[i].health -= 0.5
+            bigBoss.movement = 0
+        }
+        if (defenders[i].health <= 0) {
+            defenders.splice(i, 1)
+            i--
+        }
+    }
+
+}
+
+
+// FUNCTION TO MAKE THE TOP GAME BAR
+const gameBar = () => {
     ctx.fillStyle = 'black'
-    ctx.fillText(`Resources: ${resources}`, 20, 40)
+    ctx.font = '20px Tillana'
+    ctx.fillText(`Money: ${money}`, 20, 40)
     ctx.fillText(`Score: ${currentScore}`, 20, 60)
 
-    if(currentScore >= winningScore) {
+    if (!bigBossIsAlive) {
+        // roundWon = true
         ctx.fillStyle = 'gold'
-        ctx.font = '60px Arial'
-        ctx.fillText('Level Complete', 300, 200)
-        ctx.font = '30px Arial'
+        ctx.font = '35px Tillana'
+        ctx.fillText('The Zombies are Retreating!! Round Won!', 0, 200)
+        ctx.font = '30px Tillana'
         ctx.fillText('Score: ' + currentScore, 330, 230)
-        roundWon = true
-        console.log(enemies)
     }
-    if (gameOver === true) {
-        ctx.fillStyle = 'gold'
-        ctx.font = '60px Arial'
-        ctx.fillText('GAME OVER', 135, 330)
+    if (gameOver) {
+        ctx.fillStyle = 'red'
+        ctx.font = '60px Tillana'
+        ctx.fillText('The Zombies Ate your brains,', 0, 230)
     }
 
 
 
 }
-
-
-
-
-
-
-
 
 const printCells = () => {
     for (let i = 0; i < cells.length; i++) {
@@ -294,7 +364,6 @@ const animate = () => {
     ctx.fillStyle = 'red'
     ctx.fillRect(0, 0, canvas.width, cellSize)
     printCells()
-    gameStatus()
     for (let i = 0; i < defenders.length; i++) { // place every defender that is in the array and update it every frame
         defenders[i].placeDefender()
     }
@@ -302,10 +371,13 @@ const animate = () => {
     enemyColision()
     makeProjectiles()
     projectileCollision()
+    makeBigBoss()
+    bigBossCollision()
     frames++
-    if (!gameOver && !roundWon) { // if the game is not over
+    if (!gameOver) { // if the game is not over and the round is not won and the game was started
         requestAnimationFrame(animate) // recursive function to continue drawing the cells on the canvas
     }
+    gameBar()
 }
 animate()
 
