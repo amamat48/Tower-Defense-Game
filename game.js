@@ -2,7 +2,7 @@ let canvas = document.querySelector('#canvas1')
 let ctx = canvas.getContext('2d')
 let startButton = document.querySelector('#start-game')
 
-window.alert('Mr.President! There has been a zombie outbreak and this is the last safe space in the US. We are here to keep you safe and keep the zombies away. But these Zombies are different from the ones in the movies, they know when to retreat and they just focus on you, ripping through anything in their way! Its your job to direct us on where to go to keep us safe! (click ok to continue)')
+window.alert('Mr.President! There has been a zombie outbreak and this is the last safe space in the US. We are here to keep you safe and keep the zombies away. But these Zombies are different from the ones in the movies, they know when to retreat! Its your job to direct us on where to go to keep us safe! (click ok to continue)')
 
 canvas.width = 900
 canvas.height = 400
@@ -153,7 +153,7 @@ class Projectile {
     constructor(x, y) {
         this.x = x
         this.y = y
-        this.width = 6
+        this.width = 8
         this.speed = 3.5
     }
     placeProjectile() {
@@ -181,7 +181,7 @@ createGameBoard()
 // place a defender on the canvas depending on the mouse position
 
 canvas.addEventListener('click', function (event) {
-    let positionOfX = mouseX - (mouseX % cellSize) // calculates x coordinate of the clicked cell, subtracts the remainder, and get the most left coordinate and offset it with the cellGap, which is 3
+    let positionOfX = mouseX - (mouseX % cellSize) // calculates x coordinate of the clicked cell, subtracts the remainder, and get the most left coordinate
     let positionOfY = mouseY - (mouseY % cellSize) // same with Y
 
 
@@ -224,14 +224,14 @@ const enemyColision = () => {
         for (let j = 0; j < enemies.length; j++) {
 
             if (defenders[i] && enemies[j] && collision(defenders[i], enemies[j])) {
-                enemies[j].movement = 0
+                enemies[j].speed = 0
                 defenders[i].health -= 0.2
             }
 
             if (defenders[i] && defenders[i].health <= 0) {
                 defenders.splice(i, 1)
                 i--
-                enemies[j].movement = enemies[j].speed
+                enemies[j].speed = Math.random() * 0.3 + 0.6
             }
 
 
@@ -311,7 +311,6 @@ const bigBossCollision = () => {
     for (let i = 0; i < defenders.length; i++) {
         if (bigBoss && defenders[i] && collision(defenders[i], bigBoss)) {
             defenders[i].health -= 0.5
-            bigBoss.movement = 0
         }
         if (defenders[i].health <= 0) {
             defenders.splice(i, 1)
