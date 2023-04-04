@@ -2,7 +2,7 @@ let canvas = document.querySelector('#canvas1')
 let ctx = canvas.getContext('2d')
 let startButton = document.querySelector('#start-game')
 
-window.alert('Mr.President! There has been a zombie outbreak and this is the last safe space in the US. We are here to keep you safe and keep the zombies away. But these Zombies are different from the ones in the movies, they know when to retreat! Its your job to direct us on where to go to keep us safe! (click ok to continue)')
+window.alert('Mr.President! There has been a zombie outbreak and this is the last safe space in the US. We are here to keep you safe and keep the zombies away. But these Zombies are different from the ones in the movies, they know when to retreat and they just focus on you, ripping through anything in their way! Its your job to direct us on where to go to keep us safe! (click ok to continue)')
 
 canvas.width = 900
 canvas.height = 400
@@ -19,19 +19,20 @@ let bigBossIsAlive = true
 let cellSize = 100
 let cellGap = 3
 let frames = 0
-let enemySpawnTime = 200
+let enemySpawnTime = 180
 
 // PLAYER STATUS VARIABLES
 let currentScore = 0
-let money = 300
+let money = 400
 let defenderCost = 100
-let winningScore = 150
+let winningScore = 200
 
 // EMPTY ARRAYS FOR STORING DATA
 let cells = []
 let defenders = []
 let projectiles = []
 let enemies = []
+
 
 
 // TO STORE MOUS DATA
@@ -130,8 +131,8 @@ class BigBoss {
         this.y = 100
         this.width = cellSize * 3
         this.height = canvas.height
-        this.speed = Math.random() * 0.2 + 0.1
-        this.health = 10000
+        this.speed = Math.random() * 0.3 + 0.3
+        this.health = 5000
     }
     placeBoss() {
         ctx.fillStyle = 'green'
@@ -145,13 +146,8 @@ class BigBoss {
     }
 }
 
-// FINAL BOSS
+// 1st Big Boss
 let bigBoss = new BigBoss()
-
-
-
-
-
 
 class Projectile {
     constructor(x, y) {
@@ -292,7 +288,6 @@ const projectileCollision = () => {
 
 const makeBigBoss = () => { // contains all the logic related to the Big Boss
     if (currentScore >= winningScore && enemies.length == 0) {
-        window.alert('The zombies seemed to have something up their sleeve! That zombie is pretty big we might have a problem on our hands! it even goes through our defenders to get strait to you!')
         bigBoss.placeBoss()
         bigBoss.move()
     }
@@ -327,6 +322,7 @@ const bigBossCollision = () => {
 }
 
 
+
 // FUNCTION TO MAKE THE TOP GAME BAR
 const gameBar = () => {
     ctx.fillStyle = 'black'
@@ -335,20 +331,18 @@ const gameBar = () => {
     ctx.fillText(`Score: ${currentScore}`, 20, 60)
 
     if (!bigBossIsAlive) {
-        // roundWon = true
+        roundWon = true
         ctx.fillStyle = 'gold'
         ctx.font = '35px Tillana'
-        ctx.fillText('The Zombies are Retreating!! Round Won!', 0, 200)
+        ctx.fillText("You killed all the zombies!!! You're safe, For now", 0, 200)
         ctx.font = '30px Tillana'
         ctx.fillText('Score: ' + currentScore, 330, 230)
     }
     if (gameOver) {
         ctx.fillStyle = 'red'
-        ctx.font = '60px Tillana'
-        ctx.fillText('The Zombies Ate your brains,', 0, 230)
+        ctx.font = '50px Tillana'
+        ctx.fillText('The Zombies Ate your brains, Game over', 0, 230)
     }
-
-
 
 }
 
@@ -374,7 +368,7 @@ const animate = () => {
     makeBigBoss()
     bigBossCollision()
     frames++
-    if (!gameOver) { // if the game is not over and the round is not won and the game was started
+    if (!gameOver && bigBossIsAlive) { // if the game is not over and the round is not won and the game was started
         requestAnimationFrame(animate) // recursive function to continue drawing the cells on the canvas
     }
     gameBar()
